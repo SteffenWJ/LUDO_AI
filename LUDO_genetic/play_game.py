@@ -37,11 +37,11 @@ while not there_is_a_winner:
     current_round.append(player_pieces)
     
     test = get_input(dice, move_pieces, player_pieces, enemy_pieces)
-    #print(np.size(test))
-    enviroment_image_rgb = game.render_environment() # RGB image of the enviroment
-    enviroment_image_bgr = cv2.cvtColor(enviroment_image_rgb, cv2.COLOR_RGB2BGR)
-    cv2.imshow("Enviroment", enviroment_image_bgr)
-    cv2.waitKey(0)
+    print(test)
+    #enviroment_image_rgb = game.render_environment() # RGB image of the enviroment
+    #enviroment_image_bgr = cv2.cvtColor(enviroment_image_rgb, cv2.COLOR_RGB2BGR)
+    #cv2.imshow("Enviroment", enviroment_image_bgr)
+    #cv2.waitKey(0)
     if len(move_pieces):
         piece_to_move = move_pieces[np.random.randint(0, len(move_pieces))]
     else:
