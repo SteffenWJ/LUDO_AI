@@ -2,6 +2,9 @@ import ludopy
 import numpy as np
 import cv2
 
+
+import ann_model as ann
+
 g = ludopy.Game()
 there_is_a_winner = False
 
@@ -19,5 +22,14 @@ while not there_is_a_winner:
         piece_to_move = -1
 
     _, _, _, _, _, there_is_a_winner = g.answer_observation(piece_to_move)
-
 cv2.destroyAllWindows()
+
+
+ann_model = ann.ANN_network(4)
+A,B,C,weights = ann_model.get_weights()
+
+ann_model_2 = ann.ANN_network(4)
+AB,BB,CB,weights_B = ann_model_2.get_weights()
+
+print(f"weights: {A}")
+print(f"weights: {AB}")

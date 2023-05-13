@@ -1,55 +1,57 @@
 import ludopy
 import numpy as np
-
+import ann_model as ann
 import cv2
+
+import random
+
+import helper_functions as hf
+import genetic_alghorithm as ga
+
+import tensorflow as tf
 
 there_is_a_winner = False
 
+#https://github.com/SimonLBSoerensen/LUDOpy
 
-played_game = []
-current_round = []
-
+#game = ludopy.Game(ghost_players=[2,3])
 game = ludopy.Game()
-rounds = 0
+AI_controller = random.randint(0, 3)
 
-AI_controller = np.random.randint(0, 4)
+#test_pop = ga.Population_object(1,0)
 
-def get_input(dice, move_pieces, player_pieces, enemy_pieces):
-    #Function needs to return a flatten array of the inputs
-    print(move_pieces)
-    if np.size(move_pieces) == 0:
-        _move_pieces = np.array([0, 0, 0, 0])
-    elif np.size(move_pieces) > 0:
-        _move_pieces = np.array([0, 0, 0, 0])
-        for num in move_pieces:
-            _move_pieces[num] = 1
-    _move_pieces = _move_pieces.flatten()
-    print(f"Size: {np.size(_move_pieces)} and values where:\n {_move_pieces}")
-    _player_pieces = player_pieces.flatten()
-    #print(f"Size: {np.size(_player_pieces)} and values where:\n {_player_pieces}")
-    _enemy_pieces = enemy_pieces.flatten()
-    #print(f"Size: {np.size(_enemy_pieces)} and values where:\n {_enemy_pieces}")
-    _dice = np.array([dice])
-    return np.concatenate([_dice, _move_pieces, _player_pieces, _enemy_pieces])
+test_selection = ga.selection_of_pop()
+count = 0
+while count < 100:
+    game = ludopy.Game()
+    there_is_a_winner = False
+    test_pop = ga.Population_object(count,0)
+    while not there_is_a_winner:
+        (dice, move_pieces, player_pieces, enemy_pieces, player_is_a_winner, there_is_a_winner), player_i = game.get_observation()
 
-while not there_is_a_winner:
-    (dice, move_pieces, player_pieces, enemy_pieces, player_is_a_winner, there_is_a_winner), player_i = game.get_observation()
-    current_round.append(player_pieces)
-    
-    test = get_input(dice, move_pieces, player_pieces, enemy_pieces)
-    print(test)
-    #enviroment_image_rgb = game.render_environment() # RGB image of the enviroment
-    #enviroment_image_bgr = cv2.cvtColor(enviroment_image_rgb, cv2.COLOR_RGB2BGR)
+        if len(move_pieces) and player_i != AI_controller:
+            piece_to_move = move_pieces[np.random.randint(0, len(move_pieces))]
+        elif len(move_pieces) and player_i == AI_controller:
+            test_pop(dice, move_pieces, player_pieces, enemy_pieces)
+            piece_to_move = test_pop.get_piece_to_move()
+            #cv2.waitKey(0)
+        else:
+            piece_to_move = -1
+        enviroment_image_rgb = game.render_environment() # RGB image of the enviroment
+        enviroment_image_bgr = cv2.cvtColor(enviroment_image_rgb, cv2.COLOR_RGB2BGR)
+        #cv2.imshow("Enviroment", enviroment_image_bgr)
+        #cv2.waitKey(1)
+        a_dice, a_move_pieces, a_player_pieces, a_enemy_pieces, a_player_is_a_winner, there_is_a_winner = game.answer_observation(piece_to_move)
+    print(f"Player {player_i} won the game AI was {AI_controller}")
+    #print(f"Generation : {count} the fit was {test_pop.get_fitness_value()}")
+    test_pop.print_the_values()
+    print(f"Above was count {count}")
+    test_selection(test_pop)
+    count = count +1
+    #test_pop.print_the_values()
     #cv2.imshow("Enviroment", enviroment_image_bgr)
     #cv2.waitKey(0)
-    if len(move_pieces):
-        piece_to_move = move_pieces[np.random.randint(0, len(move_pieces))]
-    else:
-        piece_to_move = -1
-    a_dice, a_move_pieces, a_player_pieces, a_enemy_pieces, a_player_is_a_winner, there_is_a_winner = game.answer_observation(piece_to_move)
-    if player_i == 0:
-        rounds += 1
-        played_game.append(current_round)
-        current_round = []
-        
-        
+    #cv2.destroyAllWindows()
+test_selection.print_fitness_values()
+
+print("ALL DONE")
