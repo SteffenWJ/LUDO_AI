@@ -19,7 +19,7 @@ game = ludopy.Game()
 AI_controller = random.randint(0, 3)
 
 #test_pop = ga.Population_object(1,0)
-
+list_fitness_values = []
 test_selection = ga.selection_of_pop()
 count = 0
 while count < 100:
@@ -43,8 +43,11 @@ while count < 100:
         #cv2.waitKey(1)
         a_dice, a_move_pieces, a_player_pieces, a_enemy_pieces, a_player_is_a_winner, there_is_a_winner = game.answer_observation(piece_to_move)
     print(f"Player {player_i} won the game AI was {AI_controller}")
+    if player_i == AI_controller:
+        test_pop.update_win()
     #print(f"Generation : {count} the fit was {test_pop.get_fitness_value()}")
     test_pop.print_the_values()
+    #list_fitness_values.append(test_pop.get_fitness_value())
     print(f"Above was count {count}")
     test_selection(test_pop)
     count = count +1
@@ -52,6 +55,10 @@ while count < 100:
     #cv2.imshow("Enviroment", enviroment_image_bgr)
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
-test_selection.print_fitness_values()
+#test_selection.print_fitness_values()
 
+#sorthing the lsit
+#list_fitness_values = sorted(list_fitness_values)
+#print(list_fitness_values)
+#test_selection.print_fitness_values()
 print("ALL DONE")

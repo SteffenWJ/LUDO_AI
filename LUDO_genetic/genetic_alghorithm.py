@@ -89,10 +89,10 @@ class Population_object:
         #This is a debug print to see how the fitness was achived
         print(f"The AI had the following statistics")
         print(f"AI had a fitness of {self.get_fitness_value()}")
-        print(f"The AI had kills:   {self.get_kills()}")
-        print(f"The AI had stars:   {self.get_star_spots()}")
-        print(f"The AI had globes:  {self.get_safe_spots()}")
-        print(f"The AI had safe:    {self.get_distance()}")
+        print(f"The AI kills :   {self.get_kills()}")
+        print(f"The AI stars :   {self.get_star_spots()}")
+        print(f"The AI globes:  {self.get_safe_spots()}")
+        print(f"The AI Dist  :    {self.get_distance()}")
     
     def get_input(self,dice, move_pieces, player_pieces, enemy_pieces):
         #Function needs to return a flatten array of the inputs
