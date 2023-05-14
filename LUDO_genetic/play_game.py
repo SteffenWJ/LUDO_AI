@@ -4,11 +4,7 @@ import ann_model as ann
 import cv2
 
 import random
-
-import helper_functions as hf
 import genetic_alghorithm as ga
-
-import tensorflow as tf
 
 there_is_a_winner = False
 

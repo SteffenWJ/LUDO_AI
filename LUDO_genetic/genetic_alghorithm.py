@@ -3,7 +3,8 @@ import ann_model as ann
 import helper_functions as hf
 import names
 
-
+import os
+import datetime
 
 rng = np.random.default_rng()
 
@@ -91,12 +92,19 @@ class Population_object:
         return self.star_spot
     
     def get_the_weights(self):
-        A,B,C,D = self.ann_model.get_weights()
+        A,B,C,D = self.ann_model.get_the_weights()
         return A,B,C,D
     
     def set_fitnes_value(self,num):
         #For debuging
         self.fitness = num
+        
+    def save_weight(self, path, name_of_run, number = 0):
+        the_weights = self.ann_model.get_all_the_weights()
+        the_path = path+"/weights/"+name_of_run+"/"
+        os.makedirs(the_path,exist_ok=True)
+        the_path = the_path+ str(number) + ".npy"
+        np.save(the_path, the_weights)
     
     def print_the_values(self):
         #This is a debug print to see how the fitness was achived

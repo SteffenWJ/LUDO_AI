@@ -7,8 +7,10 @@ import keras as ks
 class ANN_network:
     #Creates the ANN model using tensorflow and keras to make creating the model easier for training my the genetic alghorithm:
     #To DO is to set the weights more randomly
-    def get_weights(self):
+    def get_the_weights(self):
         return self.model.layers[0].get_weights()[0], self.model.layers[1].get_weights()[0], self.model.layers[2].get_weights()[0], self.model.get_weights()
+    def get_all_the_weights(self):
+        return self.model.get_weights()
     def get_model_view(self):
         return self.model.summary()
     

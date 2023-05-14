@@ -144,3 +144,6 @@ best_pop = test_selection.get_population()
 test_new_pop = create_population(best_pop)
 
 print(len(test_new_pop))
+
+
+test_pop_1.save_weight("/home/steffen/uni/sem2mes/tools_AI/LUDO_AI/LUDO_genetic/output","hey",9)
