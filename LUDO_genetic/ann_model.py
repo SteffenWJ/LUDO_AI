@@ -8,7 +8,7 @@ class ANN_network:
     #Creates the ANN model using tensorflow and keras to make creating the model easier for training my the genetic alghorithm:
     #To DO is to set the weights more randomly
     def get_weights(self):
-        return self.model.layers[0].get_weights()[0], self.model.layers[1].get_weights()[0], self.model.layers[1].get_weights()[0], self.model.get_weights()
+        return self.model.layers[0].get_weights()[0], self.model.layers[1].get_weights()[0], self.model.layers[2].get_weights()[0], self.model.get_weights()
     def get_model_view(self):
         return self.model.summary()
     
@@ -18,7 +18,7 @@ class ANN_network:
         input_state = np.reshape(input, (1, size)) #Reshapes the input to fit the model the size is to make it easier to test later.
         return self.model.predict(input_state)
         
-    def __init__(self, state_inputs, layer_1 = 8, layer_2 = 8, weights = None):
+    def __init__(self, state_inputs = 21, layer_1 = 8, layer_2 = 8, weights = None):
         
         self.model = tf.keras.models.Sequential()
         self.layer_1 = ks.layers.Dense(layer_1, activation='relu', name = "Layer_1",input_shape =(state_inputs,),use_bias=False)
@@ -29,8 +29,7 @@ class ANN_network:
         self.model.add(self.layer_2)
         self.model.add(self.output_layer)
         
-        
         if weights != None:
             self.model.set_weights(weights)
         
-        print("Model built")
+        #print("Model built")

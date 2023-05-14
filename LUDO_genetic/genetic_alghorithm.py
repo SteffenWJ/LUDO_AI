@@ -1,4 +1,3 @@
-from typing import Any
 import numpy as np
 import ann_model as ann
 import helper_functions as hf
@@ -26,13 +25,13 @@ class selection_of_pop:
         
         
     def __init__(self) -> None:
-        self.populations = np.array([], dtype=[('object', object), ('fitness_value', float)])
+        self.populations = np.array([], dtype=[('Population', object), ('fitness_value', float)])
         self.lowest_fitnes = 0
         self.full = False
     
     def __call__(self, pop):
         if self.full == False:
-            self.populations = np.append(self.populations, np.array([(pop, pop.get_fitness_value())], dtype=[('object', object), ('fitness_value', float)]))
+            self.populations = np.append(self.populations, np.array([(pop, pop.get_fitness_value())], dtype=[('Population', object), ('fitness_value', float)]))
             if (pop.get_fitness_value() > self.lowest_fitnes):
                 self.lowest_fitnes = pop.get_fitness_value()
             if self.populations.shape[0] == 10:
@@ -40,7 +39,7 @@ class selection_of_pop:
         else:
             if pop.get_fitness_value() > self.lowest_fitnes:
                 self.populations = np.delete(self.populations, np.argmin(self.populations['fitness_value']))
-                self.populations = np.append(self.populations, np.array([(pop, pop.get_fitness_value())], dtype=[('object', object), ('fitness_value', float)]))
+                self.populations = np.append(self.populations, np.array([(pop, pop.get_fitness_value())], dtype=[('Population', object), ('fitness_value', float)]))
                 self.lowest_fitnes = np.min(self.populations['fitness_value'])
                 self.lowest_fitnes = np.argmin(self.populations['fitness_value'])
 
@@ -62,6 +61,10 @@ class Population_object:
         dis_A, dis_B, dis_C, dis_D = self.calculate_distance()
         self.fitness = self.win*10 + self.kills + dis_A+ dis_B + dis_C + dis_D + self.safe_spot + self.star_spot - self.killed_num
         return self.fitness
+    
+    def get_fitness_value_raw(self):
+        return self.fitness
+    
     def update_win(self):
         self.win = True
     def update_kill(self, ammount = 1):
@@ -72,6 +75,8 @@ class Population_object:
         self.safe_spot += 1
     def update_star_spot(self):
         self.star_spot += 1
+    def set_kills(self,num):
+        self.kills = num
     def how_many_dead(self): #Not using it right now but would use to to try and keep it from getting killed
         return self.kills_num
     def get_piece_to_move(self):
@@ -84,6 +89,14 @@ class Population_object:
         return self.calculate_distance()
     def get_star_spots(self):
         return self.star_spot
+    
+    def get_the_weights(self):
+        A,B,C,D = self.ann_model.get_weights()
+        return A,B,C,D
+    
+    def set_fitnes_value(self,num):
+        #For debuging
+        self.fitness = num
     
     def print_the_values(self):
         #This is a debug print to see how the fitness was achived
@@ -118,12 +131,11 @@ class Population_object:
         return _input
     
 
-    def __init__(self, generation_number, player_number, parent_A = None, parent_B = None, weights = None):
+    def __init__(self, generation_number, parent_A = None, parent_B = None, weights = None):
         self.gen_num    = generation_number
         self.name       = names.get_first_name()+"_"+names.get_last_name()+"_"+str(generation_number)
         self.parent_A   = parent_A
         self.parent_B   = parent_B
-        self.player_num = player_number
         self.fitness    = 0
         self.kills      = 0
         self.safe_spot  = 0
@@ -132,7 +144,7 @@ class Population_object:
         self.piece_to_move = None
         self.distance   = np.zeros(4, dtype=int)
         self.win        = False
-        self.ann_model  = ann.ANN_network(21,weights=weights)
+        self.ann_model  = ann.ANN_network(weights=weights)
     
     def __call__(self, dice, move_pieces, player_pieces, enemy_pieces):
         #print(f"enemy_pieces {enemy_pieces}")
@@ -173,23 +185,18 @@ def mutate_weights(weights):
     _flat_wheigt    = np.concatenate(weights)
     _how_many_mute  = np.random.randint(1,np.size(weights)) #op to half can be mutated
     _muate_select   = rng.choice(np.size(weights), size=_how_many_mute, replace=False)
-    
-    #print(f"_temp_shape: {_temp_shape}")
-    #print(f"_flat_wheigt: {_flat_wheigt}")
-    #print(f"_how_many_mute: {_how_many_mute}")
-    print(f"_muate_select: {_muate_select}")
-    
+    #print(f"_muate_select: {_muate_select}")
     for i in _muate_select:
-        print(f"i: {i}")
-        print(f"weights[i] was: {_flat_wheigt[i]}")
+        #print(f"i: {i}")
+        #print(f"weights[i] was: {_flat_wheigt[i]}")
         changed = np.random.uniform(-1,1)
-        print(f"changed: {changed}")
+        #print(f"changed: {changed}")
         if _flat_wheigt[i]+changed < -1 or _flat_wheigt[i]+changed > 1:
-            print(f"Was to high or low with {_flat_wheigt[i]+changed}")
+            #print(f"Was to high or low with {_flat_wheigt[i]+changed}")
             _flat_wheigt[i] = _flat_wheigt[i]-changed
         else:
             _flat_wheigt[i] = _flat_wheigt[i]+changed
-        print(f"weights[i] now: {_flat_wheigt[i]}")
+        #print(f"weights[i] now: {_flat_wheigt[i]}")
     
     _reshape_array = np.reshape(_flat_wheigt, _temp_shape)
     return _reshape_array
@@ -207,3 +214,57 @@ def crossover_weights(weights_A, wieghts_b):
     _temp_child_A = np.reshape(_temp_A, _temp_shape)
     _temp_child_B = np.reshape(_temp_B, _temp_shape)
     return _temp_child_A, _temp_child_B
+
+def create_population(the_best_pop, generation = 0):
+    #This function creates 50 new populations from a list of the best 10
+    _the_new_populations = np.array([], dtype=[('Population', object)])
+    _selection  = rng.choice(the_best_pop.shape[0], size=the_best_pop.shape[0], replace=False)
+    #I split the selection in half so i can randomly mix them togheter to try and remove any bias this will give is 20 populations
+    _left_half   = _selection[:len(_selection)//2]
+    _right_half  = _selection[len(_selection)//2:]
+    _object_list = the_best_pop['Population']
+    #print(_object_list)
+    print(len(_right_half))
+    for i in range(0,len(_right_half)):
+        AA,AB,AC,AD = _object_list[_left_half][0].get_the_weights()
+        BA,BB,BC,BD = _object_list[_right_half][0].get_the_weights()
+        AA , BA = crossover_weights(AA,BA)
+        AB , BB = crossover_weights(AB,BB)
+        AC , BC = crossover_weights(AC,BC)
+        #Not the pretiests way to do it, but easier for me to see what is going on
+        BD[0] = AA
+        BD[1] = AB
+        BD[2] = AC
+        AD[0] = BA
+        AD[1] = BB
+        AD[2] = BC
+        temp_pop_A = Population_object(generation, weights = AD)
+        temp_pop_B = Population_object(generation, weights = BD)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_A)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_B)
+    for i in range(0,len(_object_list)):
+        #print(_object_list[i])
+        AA,AB,AC,AD = _object_list[i].get_the_weights()
+        AA = mutate_weights(AA)
+        AB = mutate_weights(AB)
+        AC = mutate_weights(AC)
+        AD[0] = AA
+        AD[1] = AB
+        AD[2] = AC
+        temp_pop_A = Population_object(generation, weights = AD)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_A)
+    
+    #print(np.argsort(the_best_pop['fitness_value']))
+    elite_3 = np.argsort(the_best_pop['fitness_value'])[-3:]
+    #print(the_best_pop[elite_3])
+    for i in elite_3:
+        _the_new_populations = np.append(_the_new_populations, the_best_pop[i])
+    #Two new random pops
+    #print(len(_the_new_populations))
+    if len(_the_new_populations) % 2 == 0:
+        for i in range(0,8):
+            _the_new_populations = np.append(_the_new_populations, Population_object(generation))
+    else:
+        for i in range(0,7):
+            _the_new_populations = np.append(_the_new_populations, Population_object(generation))
+    return _the_new_populations

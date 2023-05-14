@@ -22,7 +22,7 @@ AI_controller = random.randint(0, 3)
 list_fitness_values = []
 test_selection = ga.selection_of_pop()
 count = 0
-while count < 100:
+while count < 5:
     game = ludopy.Game()
     there_is_a_winner = False
     test_pop = ga.Population_object(count,0)

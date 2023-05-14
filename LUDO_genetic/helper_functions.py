@@ -131,4 +131,4 @@ def get_enemy_list_convert(enemies):
 
     
 #14 , 27 , 40
-enemy_pos_at_pos_SWJ(14)
+#enemy_pos_at_pos_SWJ(14)
