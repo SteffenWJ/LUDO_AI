@@ -18,7 +18,7 @@ class ANN_network:
     def use_model(self,input, size = 21):
         #Takes the input of the game and returns a 1x4 predition of what piece to move.
         input_state = np.reshape(input, (1, size)) #Reshapes the input to fit the model the size is to make it easier to test later.
-        return self.model.predict(input_state)
+        return self.model.predict(input_state, verbose=0) #Verbose is turned off to make it easier to read the output.
         
     def __init__(self, state_inputs = 21, layer_1 = 8, layer_2 = 8, weights = None):
         

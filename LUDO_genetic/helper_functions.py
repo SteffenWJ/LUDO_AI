@@ -5,6 +5,8 @@
 #GOAL_INDEX = 57
 #GLOB_INDEXS = [9, 22, 35, 48]
 import numpy as np
+import os
+
 
 #Checs if the position that it will move to have an enemy in it
 def is_it_a_star(pos):
@@ -26,9 +28,7 @@ def is_it_a_kill(pos, enemy_pos):
     if pos in enemy_pos:
         return True
     else:
-        return False
-
-
+        return False    
 #No longer used, switched out
 def get_enemies_for_player_pos(enemies):
     temp_enemy_list = []
@@ -38,6 +38,7 @@ def get_enemies_for_player_pos(enemies):
             _ = enemy_pos_at_pos_SWJ(enemy)
             temp_enemy_list.append(_[-count])
     return temp_enemy_list
+
 
 def enemy_pos_at_pos_SWJ(pos):
     #Modifed version from the source code to check if the position that it will move to have an enemy in it
@@ -97,38 +98,9 @@ def get_enemy_list_convert(enemies):
             enemy_offset_3.append([1])
         else:
             enemy_offset_3.append(temp_val[-3])
-        #enemy_offset_1.append(enemy_pos_at_pos_SWJ(off_1[0][i])[-1])
-        #enemy_offset_2.append(enemy_pos_at_pos_SWJ(off_2[0][i])[-2])
-        #enemy_offset_3.append(enemy_pos_at_pos_SWJ(off_3[0][i])[-3])
     enemy_offset_1 = np.concatenate(enemy_offset_1)
     enemy_offset_2 = np.concatenate(enemy_offset_2)
     enemy_offset_3 = np.concatenate(enemy_offset_3)
     enemy_convert_full = np.stack([enemy_offset_1,enemy_offset_2,enemy_offset_3])
         
     return enemy_offset_1, enemy_offset_2, enemy_offset_3, enemy_convert_full
-
-    
-    
-#A,B,C,D = get_enemy_list_convert(test)
-#
-#print(test)
-#print(f"Enemy 1 o: {enemy_offset_1}")
-#print(f"Enemy 1 c: {enemy_offset_1_convert}")
-#print(f"Enemy 1 F: {A}")
-#print(f"Enemy 1 R: {real_values[0]}")
-#print(f"Enemy 1 f: {enemy_offset_1_convert_full}")
-#print(f"Enemy 2 o: {enemy_offset_2}")
-#print(f"Enemy 2 c: {enemy_offset_2_convert}")
-#print(f"Enemy 2 F: {B}")
-#print(f"Enemy 2 R: {real_values[1]}")
-#print(f"Enemy 2 f: {enemy_offset_2_convert_full}")
-#print(f"Enemy 3 o: {enemy_offset_3}")
-#print(f"Enemy 3 c: {enemy_offset_3_convert}")
-#print(f"Enemy 3 F: {C}")
-#print(f"Enemy 3 R: {real_values[2]}")
-#print(f"Enemy 3 f: {enemy_offset_3_convert_full}")
-#print(f"Emeny All: {D}")
-
-    
-#14 , 27 , 40
-#enemy_pos_at_pos_SWJ(14)

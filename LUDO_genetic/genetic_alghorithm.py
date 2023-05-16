@@ -3,6 +3,8 @@ import ann_model as ann
 import helper_functions as hf
 import names
 
+import glob
+
 import os
 import datetime
 
@@ -14,7 +16,7 @@ rng = np.random.default_rng()
 #3. Create a selection function -> Done by genetic alghorithm
 #4. Create a crossover function -> Done by genetic alghorithm
 #5. Create a mutation function -> Done by genetic alghorithm
-
+    
 
 class selection_of_pop:
     #This class takes all the populations and spits out the new weights to be used in the next generation
@@ -39,10 +41,10 @@ class selection_of_pop:
                 self.full = True
         else:
             if pop.get_fitness_value() > self.lowest_fitnes:
-                self.populations = np.delete(self.populations, np.argmin(self.populations['fitness_value']))
-                self.populations = np.append(self.populations, np.array([(pop, pop.get_fitness_value())], dtype=[('Population', object), ('fitness_value', float)]))
-                self.lowest_fitnes = np.min(self.populations['fitness_value'])
-                self.lowest_fitnes = np.argmin(self.populations['fitness_value'])
+                self.populations    = np.delete(self.populations, np.argmin(self.populations['fitness_value']))
+                self.populations    = np.append(self.populations, np.array([(pop, pop.get_fitness_value())], dtype=[('Population', object), ('fitness_value', float)]))
+                self.lowest_fitnes  = np.min(self.populations['fitness_value'])
+                self.lowest_fitnes  = np.argmin(self.populations['fitness_value'])
 
 class Population_object:
     def get_generation(self):
@@ -78,7 +80,7 @@ class Population_object:
         self.star_spot += 1
     def set_kills(self,num):
         self.kills = num
-    def how_many_dead(self): #Not using it right now but would use to to try and keep it from getting killed
+    def how_many_times_dead_dead(self): #Not using it right now but would use to to try and keep it from getting killed
         return self.kills_num
     def get_piece_to_move(self):
         return self.piece_to_move
@@ -105,6 +107,18 @@ class Population_object:
         os.makedirs(the_path,exist_ok=True)
         the_path = the_path+ str(number) + ".npy"
         np.save(the_path, the_weights)
+        
+        
+    def reset_fitness(self):
+        #This is used as part of validation so the fitness can be reset
+        self.fitness    = 0
+        self.kills      = 0
+        self.safe_spot  = 0
+        self.star_spot  = 0
+        self.killed_num = 0
+        self.win        = False
+        self.distance   = np.zeros(4, dtype=int)
+        
     
     def print_the_values(self):
         #This is a debug print to see how the fitness was achived
@@ -185,9 +199,26 @@ class Population_object:
         #print(f"Done processing moving {piece_to_move} from {old_pos} to {new_pos}")
         self.piece_to_move = piece_to_move
             
-        
+def create_first_generation(ammount = 30):
+    populations = np.empty(ammount, dtype=[('Population', object), ('fitness_value', float)])
+    for i in range(ammount):
+        the_random_population = Population_object(0)
+        #the_random_population.set_kills(i) # This is for debuging leaving it for some testing
+        populations[i] = (the_random_population, -999) # Initialize with dummy fitness value
+    return populations
+
+def load_weights(path,generation_number = 0, ammount = 10):
+    #This function loads a set of weights from a path and returns a population object
+    files_in_path = glob.glob(path+"*.npy")
+    populations = np.empty(ammount, dtype=[('Population', object)])
+    for count, np_array in enumerate(files_in_path):
+        temp_weights = np.load(np_array, allow_pickle=True)
+        temp_Population = Population_object(generation_number, weights=temp_weights)
+        temp_Population.set_kills(count) # This is for debuging leaving it for some testing
+        populations[count] = temp_Population
+    return populations
     
-    
+
 def mutate_weights(weights):
     _temp_shape     = np.shape(weights)
     _flat_wheigt    = np.concatenate(weights)
@@ -276,3 +307,7 @@ def create_population(the_best_pop, generation = 0):
         for i in range(0,7):
             _the_new_populations = np.append(_the_new_populations, Population_object(generation))
     return _the_new_populations
+
+
+def run_validation(path, debug = False):
+    validation_population = load_weight_generation(path)
