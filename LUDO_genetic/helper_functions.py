@@ -40,6 +40,28 @@ def get_enemies_for_player_pos(enemies):
     return temp_enemy_list
 
 
+def save_data_to_file(generation, first_num, first_mean_fit, secound_num, seocund_mean_fit,third_num, third_mean_fit, filename):
+    with open(filename, 'w') as file:
+        file.write(f"Generation: {generation}\n")
+        file.write(f"First Elite: {first_num}\n")
+        file.write(f"First Fit: {first_mean_fit}\n")
+        file.write(f"Secound Elite: {secound_num}\n")
+        file.write(f"Secound Fit: {seocund_mean_fit}\n")
+        file.write(f"Third Elite: {third_num}\n")
+        file.write(f"Third Fit: {third_mean_fit}\n")
+
+# Load generation number and data points from a text file
+def load_data_from_file(filename):
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        generation = int(lines[0].split(":")[1].strip())
+        first_elite = int(lines[1].split(":")[1].strip())
+        first_elite_fit = float(lines[2].split(":")[1].strip())
+        secound_elite = int(lines[2].split(":")[1].strip())
+        secound_elite_fit = float(lines[3].split(":")[1].strip())
+        third_elite = int(lines[4].split(":")[1].strip())
+        third_elite_fit = float(lines[5].split(":")[1].strip())
+    return generation, first_elite, first_elite_fit, secound_elite, secound_elite_fit, third_elite, third_elite_fit
 def enemy_pos_at_pos_SWJ(pos):
     #Modifed version from the source code to check if the position that it will move to have an enemy in it
     #This is from the ludopy.player.Player class in the source code with some modifications from me

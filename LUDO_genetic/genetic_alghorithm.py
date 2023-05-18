@@ -34,15 +34,15 @@ class selection_of_pop:
     
     def __call__(self, pop):
         if self.full == False:
-            self.populations = np.append(self.populations, np.array([(pop, pop.get_fitness_value())], dtype=[('Population', object), ('fitness_value', float)]))
-            if (pop.get_fitness_value() > self.lowest_fitnes):
-                self.lowest_fitnes = pop.get_fitness_value()
+            self.populations = np.append(self.populations, np.array([(pop, pop.get_fitness_value_raw())], dtype=[('Population', object), ('fitness_value', float)]))
+            if (pop.get_fitness_value_raw() > self.lowest_fitnes):
+                self.lowest_fitnes = pop.get_fitness_value_raw()
             if self.populations.shape[0] == 10:
                 self.full = True
         else:
-            if pop.get_fitness_value() > self.lowest_fitnes:
+            if pop.get_fitness_value_raw() > self.lowest_fitnes:
                 self.populations    = np.delete(self.populations, np.argmin(self.populations['fitness_value']))
-                self.populations    = np.append(self.populations, np.array([(pop, pop.get_fitness_value())], dtype=[('Population', object), ('fitness_value', float)]))
+                self.populations    = np.append(self.populations, np.array([(pop, pop.get_fitness_value_raw())], dtype=[('Population', object), ('fitness_value', float)]))
                 self.lowest_fitnes  = np.min(self.populations['fitness_value'])
                 self.lowest_fitnes  = np.argmin(self.populations['fitness_value'])
 
@@ -60,13 +60,6 @@ class Population_object:
         D = (self.distance[3]/ max_distance) * value
         return A, B , C , D
     
-    def get_fitness_value(self):
-        dis_A, dis_B, dis_C, dis_D = self.calculate_distance()
-        self.fitness = self.win*10 + self.kills + dis_A+ dis_B + dis_C + dis_D + self.safe_spot + self.star_spot - self.killed_num
-        return self.fitness
-    
-    def get_fitness_value_raw(self):
-        return self.fitness
     
     def update_win(self):
         self.win = True
@@ -92,6 +85,14 @@ class Population_object:
         return self.calculate_distance()
     def get_star_spots(self):
         return self.star_spot
+    def get_fitness_value(self):
+        dis_A, dis_B, dis_C, dis_D = self.calculate_distance()
+        self.fitness = self.win*20 + self.kills + dis_A+ dis_B + dis_C + dis_D + self.safe_spot + self.star_spot - self.killed_num
+        return self.fitness
+    def get_fitness_value_raw(self):
+        return self.fitness
+    def get_if_won(self):
+        return self.win
     
     def get_the_weights(self):
         A,B,C,D = self.ann_model.get_the_weights()
@@ -101,9 +102,9 @@ class Population_object:
         #For debuging
         self.fitness = num
         
-    def save_weight(self, path, name_of_run, number = 0):
+    def save_weight(self, path, generation, number = 0):
         the_weights = self.ann_model.get_all_the_weights()
-        the_path = path+"/weights/"+name_of_run+"/"
+        the_path = path+"/weights/generation_"+str(generation)+"/"
         os.makedirs(the_path,exist_ok=True)
         the_path = the_path+ str(number) + ".npy"
         np.save(the_path, the_weights)
@@ -128,6 +129,7 @@ class Population_object:
         print(f"The AI stars :   {self.get_star_spots()}")
         print(f"The AI globes:  {self.get_safe_spots()}")
         print(f"The AI Dist  :    {self.get_distance()}")
+        print(f"The AI Won  :    {self.win}")
     
     def get_input(self,dice, move_pieces, player_pieces, enemy_pieces):
         #Function needs to return a flatten array of the inputs
@@ -139,25 +141,16 @@ class Population_object:
             for num in move_pieces:
                 _move_pieces[num] = 1
         _move_pieces = _move_pieces.flatten()
-        #print(f"Size: {np.size(_move_pieces)} and values where:\n {_move_pieces}")
         _player_pieces = player_pieces.flatten()
-        #print(f"Size: {np.size(_player_pieces)} and values where:\n {_player_pieces}")
         _enemy_pieces = enemy_pieces.flatten()
-        #print(f"Size: {np.size(_enemy_pieces)} and values where:\n {_enemy_pieces}")
         _dice = np.array([dice])
         _input = np.concatenate([_dice, _move_pieces, _player_pieces, _enemy_pieces])
         _input[_input == -1] = 0 #Converts the minus -1 to 0
-        #print(_input)
-        #_input = np.concatenate([_move_pieces, _player_pieces, _enemy_pieces])
-        #_input = tf.convert_to_tensor(_input, dtype=tf.float32)
         return _input
     
 
     def __init__(self, generation_number, parent_A = None, parent_B = None, weights = None):
         self.gen_num    = generation_number
-        self.name       = names.get_first_name()+"_"+names.get_last_name()+"_"+str(generation_number)
-        self.parent_A   = parent_A
-        self.parent_B   = parent_B
         self.fitness    = 0
         self.kills      = 0
         self.safe_spot  = 0
@@ -199,17 +192,18 @@ class Population_object:
         #print(f"Done processing moving {piece_to_move} from {old_pos} to {new_pos}")
         self.piece_to_move = piece_to_move
             
-def create_first_generation(ammount = 30):
-    populations = np.empty(ammount, dtype=[('Population', object), ('fitness_value', float)])
+def create_first_generation(ammount = 20): #Was 30, but limitation made it smaller
+    populations = np.empty(ammount, dtype=[('Population', object)])
     for i in range(ammount):
-        the_random_population = Population_object(0)
+        the_random_population = Population_object(1)
         #the_random_population.set_kills(i) # This is for debuging leaving it for some testing
-        populations[i] = (the_random_population, -999) # Initialize with dummy fitness value
+        populations[i] = (the_random_population) # Initialize with dummy fitness value
     return populations
 
 def load_weights(path,generation_number = 0, ammount = 10):
     #This function loads a set of weights from a path and returns a population object
     files_in_path = glob.glob(path+"*.npy")
+    files_in_path = sorted(files_in_path) #This is to make sure the files are loaded in the correct order
     populations = np.empty(ammount, dtype=[('Population', object)])
     for count, np_array in enumerate(files_in_path):
         temp_weights = np.load(np_array, allow_pickle=True)
@@ -224,7 +218,6 @@ def mutate_weights(weights):
     _flat_wheigt    = np.concatenate(weights)
     _how_many_mute  = np.random.randint(1,np.size(weights)) #op to half can be mutated
     _muate_select   = rng.choice(np.size(weights), size=_how_many_mute, replace=False)
-    #print(f"_muate_select: {_muate_select}")
     for i in _muate_select:
         #print(f"i: {i}")
         #print(f"weights[i] was: {_flat_wheigt[i]}")
@@ -263,7 +256,7 @@ def create_population(the_best_pop, generation = 0):
     _right_half  = _selection[len(_selection)//2:]
     _object_list = the_best_pop['Population']
     #print(_object_list)
-    print(len(_right_half))
+    #print(len(_right_half))
     for i in range(0,len(_right_half)):
         AA,AB,AC,AD = _object_list[_left_half][0].get_the_weights()
         BA,BB,BC,BD = _object_list[_right_half][0].get_the_weights()
@@ -294,20 +287,17 @@ def create_population(the_best_pop, generation = 0):
         _the_new_populations = np.append(_the_new_populations, temp_pop_A)
     
     #print(np.argsort(the_best_pop['fitness_value']))
-    elite_3 = np.argsort(the_best_pop['fitness_value'])[-3:]
-    #print(the_best_pop[elite_3])
-    for i in elite_3:
-        _the_new_populations = np.append(_the_new_populations, the_best_pop[i])
+    elite_offset = 3
+    #if generation != 0:
+    #    elite_3 = np.argsort(the_best_pop['fitness_value'])[-3:]
+    #    for i in elite_3:
+    #        _the_new_populations = np.append(_the_new_populations, the_best_pop[i])  
     #Two new random pops
     #print(len(_the_new_populations))
     if len(_the_new_populations) % 2 == 0:
-        for i in range(0,8):
+        for i in range(0,2+elite_offset):
             _the_new_populations = np.append(_the_new_populations, Population_object(generation))
     else:
-        for i in range(0,7):
+        for i in range(0,1+elite_offset):
             _the_new_populations = np.append(_the_new_populations, Population_object(generation))
     return _the_new_populations
-
-
-def run_validation(path, debug = False):
-    validation_population = load_weight_generation(path)
