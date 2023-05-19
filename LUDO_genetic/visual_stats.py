@@ -20,7 +20,7 @@ class print_fit_win_all:
         self.ax.set_xlim(0, 100)
         self.ax.grid()
         self.ax.plot([], [], color = 'g' ,label = "Mean Fitness")
-        self.ax.plot([], [], "--" , color = 'r', label = "Current Fitness")
+        #self.ax.plot([], [], 'ro', label = "Current Fitness")
         self.ax.plot([], [], color = 'b' ,  label = "Culumanative Wins")
         
         self.mean_fitness = []
@@ -47,7 +47,7 @@ class print_fit_win_all:
         self.ax.set_xlim(0, 100)
         self.ax.grid()
         self.ax.plot([], [], color = 'g' ,label = "Mean Fitness")
-        self.ax.plot([], [], "--" , color = 'r', label = "Current Fitness")
+        #self.ax.plot([], [], 'ro', label = "Current Fitness")
         self.ax.plot([], [], color = 'b' ,  label = "Culumanative Wins")
         
         self.mean_fitness = []
@@ -67,9 +67,9 @@ class print_fit_win_all:
         self.culumnative_wins.append(np.sum(self.wins))
         self.generation_list.append(generation)
         
-        self.ax.plot(self.generation_list,self.mean_fitness, label = "Mean Fitness")
-        self.ax.plot(self.generation_list,self.current_fitness, label = "Current Fitness")
-        self.ax.plot(self.generation_list,self.culumnative_wins, label = "Culumanative Wins")
+        self.ax.plot(self.generation_list,self.mean_fitness, color = 'g', label = "Mean Fitness")
+        #self.ax.plot(self.generation_list,self.current_fitness, 'ro', label = "Current Fitness")
+        self.ax.plot(self.generation_list,self.culumnative_wins, color = 'b', label = "Culumanative Wins")
         
         #self.figure.legend()  # Show the legend
 

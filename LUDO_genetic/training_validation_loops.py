@@ -66,7 +66,7 @@ def run_validation_game(path, show_matchs = False, print_data = False, save_data
 
 
 def run_training(save_path, generation = 0,load_weight_path = None, print_data = False,traning_limits = 5, validation_steps = 10, tries = 5):
-    if len(load_weight_path) < 1:
+    if load_weight_path == None:
         print("Creating the first generation")
         population_training = ga.create_first_generation()
         create_pop_fix = True
@@ -78,7 +78,6 @@ def run_training(save_path, generation = 0,load_weight_path = None, print_data =
     if print_data:
         visual = VS.print_fit_win_all()
         #print(test[0].get_kills())
-    #print(len(population_training))
     population_selection = ga.selection_of_pop()
     for i in tqdm(range(0, len(population_training)), desc="Population", leave=False):
         test_runner_pop = population_training[i]
@@ -147,24 +146,23 @@ def run_training(save_path, generation = 0,load_weight_path = None, print_data =
 
 def generational_training(load_path, save_path, generation_Start = 0, how_many_generations = 1, skip_load_path = False):
     print(f"Starting generational training for generation: {generation_Start} to generation: {how_many_generations}")
-    the_load_path = load_path
-    for i in tqdm(range(generation_Start, generation_Start+how_many_generations),desc="Generation",leave=False):
+    #the_load_path = load_path
+    for i in tqdm(range(generation_Start, generation_Start+how_many_generations), desc="Generation",leave=False):
+        the_load_path = save_path+"/weights/generation_"+str(i)+"/"
+        print("loadpath ",the_load_path)
         gc.collect()
         if skip_load_path:
+            #This is for creating the first generation after it should be using the ohter as the load path should be useable
             run_training(save_path, i)
         else:
-            run_training(save_path, i, the_load_path)
-        skip_load_path = False
-        the_load_path = save_path+"/weights/generation_"+str(i)+"/"
+            run_training(save_path, i+1, the_load_path)
+            skip_load_path = False
+        #the_load_path = save_path+"/weights/generation_"+str(i)+"/"
         
 
-#generational_training("","LUDO_genetic/output",0,10)
+generational_training("LUDO_genetic/output","LUDO_genetic/output",24,2)
 #print("ALL DONE")
 
 
-run_validation_game("LUDO_genetic/output/weights/generation_0/",print_data=True,weights_name="weights_0")
-run_validation_game("LUDO_genetic/output/weights/generation_1/",print_data=True,weights_name="weights_1")
-run_validation_game("LUDO_genetic/output/weights/generation_2/",print_data=True,weights_name="weights_2")
-run_validation_game("LUDO_genetic/output/weights/generation_3/",print_data=True,weights_name="weights_3")
-run_validation_game("LUDO_genetic/output/weights/generation_4/",print_data=True,weights_name="weights_4")
-run_validation_game("LUDO_genetic/output/weights/generation_5/",print_data=True,weights_name="weights_5")
+#run_validation_game("LUDO_genetic/output/weights/generation_10/",print_data=True,weights_name="weights_10")
+

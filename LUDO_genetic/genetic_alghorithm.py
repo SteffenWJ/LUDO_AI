@@ -192,7 +192,7 @@ class Population_object:
         #print(f"Done processing moving {piece_to_move} from {old_pos} to {new_pos}")
         self.piece_to_move = piece_to_move
             
-def create_first_generation(ammount = 20): #Was 30, but limitation made it smaller
+def create_first_generation(ammount = 50): #Was 30, but limitation made it smaller
     populations = np.empty(ammount, dtype=[('Population', object)])
     for i in range(ammount):
         the_random_population = Population_object(1)
