@@ -10,7 +10,7 @@ import random
 import genetic_alghorithm as ga
 
 from tqdm import tqdm
-from time import time
+import time 
 
 def run_validation_game(path, show_matchs = False, print_data = False, save_data = False, how_many_runs = 100, weights_name = None):
     test_population = ga.load_weights(path)
@@ -73,7 +73,8 @@ def run_training(save_path, generation = 0,load_weight_path = None, print_data =
     else:
         print(f"Loading weights from: {load_weight_path}")
         population_training = ga.load_weights(load_weight_path)
-        population_training = ga.create_population(population_training,generation)
+        #population_training = ga.create_population(population_training,generation)
+        population_training = ga.create_population_doubel(population_training,generation)
         create_pop_fix = False
     if print_data:
         visual = VS.print_fit_win_all()
@@ -160,9 +161,7 @@ def generational_training(load_path, save_path, generation_Start = 0, how_many_g
         #the_load_path = save_path+"/weights/generation_"+str(i)+"/"
         
 
-generational_training("LUDO_genetic/output","LUDO_genetic/output",24,2)
-#print("ALL DONE")
-
+generational_training("LUDO_genetic/output","LUDO_genetic/output",39,1)
 
 #run_validation_game("LUDO_genetic/output/weights/generation_10/",print_data=True,weights_name="weights_10")
 

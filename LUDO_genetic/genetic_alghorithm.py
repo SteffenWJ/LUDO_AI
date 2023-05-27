@@ -223,11 +223,12 @@ def mutate_weights(weights):
         #print(f"weights[i] was: {_flat_wheigt[i]}")
         changed = np.random.uniform(-1,1)
         #print(f"changed: {changed}")
-        if _flat_wheigt[i]+changed < -1 or _flat_wheigt[i]+changed > 1:
-            #print(f"Was to high or low with {_flat_wheigt[i]+changed}")
-            _flat_wheigt[i] = _flat_wheigt[i]-changed
-        else:
-            _flat_wheigt[i] = _flat_wheigt[i]+changed
+        #if _flat_wheigt[i]+changed < -1 or _flat_wheigt[i]+changed > 1:
+        #    #print(f"Was to high or low with {_flat_wheigt[i]+changed}")
+        #    _flat_wheigt[i] = _flat_wheigt[i]-changed
+        #else:
+        #    _flat_wheigt[i] = _flat_wheigt[i]+changed
+        _flat_wheigt[i] = _flat_wheigt[i]+changed
         #print(f"weights[i] now: {_flat_wheigt[i]}")
     
     _reshape_array = np.reshape(_flat_wheigt, _temp_shape)
@@ -250,6 +251,100 @@ def crossover_weights(weights_A, wieghts_b):
 def create_population(the_best_pop, generation = 0):
     #This function creates 50 new populations from a list of the best 10
     _the_new_populations = np.array([], dtype=[('Population', object)])
+    _selection  = rng.choice(the_best_pop.shape[0], size=the_best_pop.shape[0], replace=False)
+    #I split the selection in half so i can randomly mix them togheter to try and remove any bias this will give is 20 populations
+    _left_half   = _selection[:len(_selection)//2]
+    _right_half  = _selection[len(_selection)//2:]
+    _object_list = the_best_pop['Population']
+    #print(_object_list)
+    #print(len(_right_half))
+    for i in range(0,len(_right_half)):
+        AA,AB,AC,AD = _object_list[_left_half][0].get_the_weights()
+        BA,BB,BC,BD = _object_list[_right_half][0].get_the_weights()
+        AA , BA = crossover_weights(AA,BA)
+        AB , BB = crossover_weights(AB,BB)
+        AC , BC = crossover_weights(AC,BC)
+        #Not the pretiests way to do it, but easier for me to see what is going on
+        BD[0] = AA
+        BD[1] = AB
+        BD[2] = AC
+        AD[0] = BA
+        AD[1] = BB
+        AD[2] = BC
+        temp_pop_A = Population_object(generation, weights = AD)
+        temp_pop_B = Population_object(generation, weights = BD)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_A)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_B)
+    for i in range(0,len(_object_list)):
+        #print(_object_list[i])
+        AA,AB,AC,AD = _object_list[i].get_the_weights()
+        AA = mutate_weights(AA)
+        AB = mutate_weights(AB)
+        AC = mutate_weights(AC)
+        AD[0] = AA
+        AD[1] = AB
+        AD[2] = AC
+        temp_pop_A = Population_object(generation, weights = AD)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_A)
+    
+    #print(np.argsort(the_best_pop['fitness_value']))
+    elite_offset = 3
+    #if generation != 0:
+    #    elite_3 = np.argsort(the_best_pop['fitness_value'])[-3:]
+    #    for i in elite_3:
+    #        _the_new_populations = np.append(_the_new_populations, the_best_pop[i])  
+    #Two new random pops
+    #print(len(_the_new_populations))
+    if len(_the_new_populations) % 2 == 0:
+        for i in range(0,2+elite_offset):
+            _the_new_populations = np.append(_the_new_populations, Population_object(generation))
+    else:
+        for i in range(0,1+elite_offset):
+            _the_new_populations = np.append(_the_new_populations, Population_object(generation))
+    return _the_new_populations
+
+
+def create_population_doubel(the_best_pop, generation = 0):
+    #This function creates 50 new populations from a list of the best 10
+    _the_new_populations = np.array([], dtype=[('Population', object)])
+    _selection  = rng.choice(the_best_pop.shape[0], size=the_best_pop.shape[0], replace=False)
+    #I split the selection in half so i can randomly mix them togheter to try and remove any bias this will give is 20 populations
+    _left_half   = _selection[:len(_selection)//2]
+    _right_half  = _selection[len(_selection)//2:]
+    _object_list = the_best_pop['Population']
+    #print(_object_list)
+    #print(len(_right_half))
+    for i in range(0,len(_right_half)):
+        AA,AB,AC,AD = _object_list[_left_half][0].get_the_weights()
+        BA,BB,BC,BD = _object_list[_right_half][0].get_the_weights()
+        AA , BA = crossover_weights(AA,BA)
+        AB , BB = crossover_weights(AB,BB)
+        AC , BC = crossover_weights(AC,BC)
+        #Not the pretiests way to do it, but easier for me to see what is going on
+        BD[0] = AA
+        BD[1] = AB
+        BD[2] = AC
+        AD[0] = BA
+        AD[1] = BB
+        AD[2] = BC
+        temp_pop_A = Population_object(generation, weights = AD)
+        temp_pop_B = Population_object(generation, weights = BD)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_A)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_B)
+    for i in range(0,len(_object_list)):
+        #print(_object_list[i])
+        AA,AB,AC,AD = _object_list[i].get_the_weights()
+        AA = mutate_weights(AA)
+        AB = mutate_weights(AB)
+        AC = mutate_weights(AC)
+        AD[0] = AA
+        AD[1] = AB
+        AD[2] = AC
+        temp_pop_A = Population_object(generation, weights = AD)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_A)
+    
+    
+    #Run the same code a secound tme    
     _selection  = rng.choice(the_best_pop.shape[0], size=the_best_pop.shape[0], replace=False)
     #I split the selection in half so i can randomly mix them togheter to try and remove any bias this will give is 20 populations
     _left_half   = _selection[:len(_selection)//2]
