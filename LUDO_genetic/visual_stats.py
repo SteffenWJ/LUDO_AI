@@ -4,6 +4,54 @@ import numpy as np
 
 
 
+class print_comparions:
+    def save_figure(self, path, name):
+        save_path = path+"/"+name+".png"
+        self.figure.savefig(save_path)
+    def __init__(self, xLim = 1000, yLim = 1000):
+        self.figure = plt.figure()
+        self.ax = self.figure.add_subplot(111)
+        self.ax.set_title("Win rate comparsion")
+        self.ax.set_xlabel("Games played")
+        self.ax.set_ylabel("Win rates")
+        #Might need to change these to be dynamic
+        self.ax.set_ylim(0, xLim)
+        self.ax.set_xlim(1, yLim)
+        self.ax.grid()
+        self.ax.plot([], [], color = '0.5' , linestyle=':', label='Random player A')
+        self.ax.plot([], [], color = '0.5' , linestyle=':', label='Random player B')
+        self.ax.plot([], [], color = '0.5' , linestyle=':', label='Random player C')
+        self.ax.plot([], [], color = 'b' , linestyle=':', label='Win rate Genetic Algorithm')
+        
+        self.magna_wins = []
+        self.SWJ_wins = []
+        self.random_A = []
+        self.random_B = []
+        
+        self.games = []
+        self.ax.legend()
+        self.figure.show()
+        
+    def __call__(self, win_mag, win_swj,win_A,win_B, game):
+        self.magna_wins.append(win_mag)
+        self.SWJ_wins.append(win_swj)
+        self.random_A.append(win_A)
+        self.random_B.append(win_B)
+        
+        self.games.append(game+1)
+        
+        self.ax.plot(self.games, self.random_A, color = '0.5' , linestyle=':',  label='Random player A')
+        self.ax.plot(self.games, self.random_B, color = '0.5' , linestyle=':',  label='Random player B')
+        self.ax.plot(self.games, self.SWJ_wins, color = '0.5' , linestyle=':', label='Random player C')
+        self.ax.plot(self.games, self.magna_wins, color = 'b' , linestyle=':', label='Win rate Genetic Algorithm')
+        #self.ax.plot(self.games, self.SWJ_wins, color = 'b' , linestyle=':', label='Win rate Genetic Algorithm')
+        
+        #self.figure.legend()  # Show the legend
+
+        
+        self.figure.canvas.draw()
+        self.figure.canvas.flush_events()
+
 class print_fit_win_all:
     #This class is used to visulise the different fitnesses value, the mean fitness and culumanative wins
     #As the fitness value will never go over 100 and i plan to run the validation to be a 100 this should be fine.

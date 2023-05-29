@@ -19,6 +19,7 @@ rng = np.random.default_rng()
 class selection_of_pop:
     #This class takes all the populations and spits out the new weights to be used in the next generation
     def get_population(self):
+        self.populations = np.sort(self.populations, order='fitness_value')
         return self.populations
     
     def print_fitness_values(self):
@@ -223,15 +224,15 @@ def create_first_generation(ammount = 50): #Was 30, but limitation made it small
 def load_weights(path,generation_number = 0, ammount = 10):
     #This function loads a set of weights from a path and returns a population object
     files_in_path = glob.glob(path+"*.npy")
-    files_in_path = sorted(files_in_path) #This is to make sure the files are loaded in the correct order
+    #files_in_path = sorted(files_in_path) #This is to make sure the files are loaded in the correct order
     populations = np.empty(ammount, dtype=[('Population', object)])
+    print(f"files_in_path: {files_in_path}")
     for count, np_array in enumerate(files_in_path):
         temp_weights = np.load(np_array, allow_pickle=True)
         temp_Population = Population_object(generation_number, weights=temp_weights)
         temp_Population.set_kills(count) # This is for debuging leaving it for some testing
         populations[count] = temp_Population
-    return populations
-    
+    return populations    
 
 def mutate_weights(weights):
     _temp_shape     = np.shape(weights)

@@ -1,5 +1,6 @@
 import ludopy
 import numpy as np
+
 import cv2
 
 import gc
@@ -10,8 +11,8 @@ import random
 #import genetic_alghorithm as ga
 import GAS as ga
 
+from qLearningMagn.MagnPlayer import MagnPlayer
 from tqdm import tqdm
-import time 
 
 def run_validation_game(path, save_to_me, show_matchs = False, print_data = False, save_data = False, how_many_runs = 100, weights_name = None):
     test_population = ga.load_weights(path)
@@ -24,9 +25,10 @@ def run_validation_game(path, save_to_me, show_matchs = False, print_data = Fals
         if print_data:
             visual.reset_plot()
         for i in tqdm(range(0,how_many_runs), desc="Game Loop", leave=False):
-            game = ludopy.Game()
+            game = ludopy.Game(ghost_players=[1,3])
             there_is_a_winner = False
-            AI_controller = random.randint(0, 3) #Randomly select a player to be controlled by AI
+            #AI_controller = random.randint(0, 3) #Randomly select a player to be controlled by AI
+            AI_controller = 0
             current_round = 0
             while not there_is_a_winner:
                 current_round += 1
@@ -64,6 +66,76 @@ def run_validation_game(path, save_to_me, show_matchs = False, print_data = Fals
     #cv2.destroyAllWindows()
 #run_validation_game("LUDO_genetic/output/weights/test_load/",print_data=True)
 
+def compare_game(path, save_to_me, print_data = False, how_many_runs = 100, figure_name = None):
+    test_population = ga.load_weights(path,1)
+    #os.makedirs(save_to_me+"/figures/"+figure_name+"/", exist_ok=True)
+    wins_magn = 0
+    wins_SWJ = 0
+    no_player_A = 0
+    no_player_B = 0
+    no_player_C = 0
+    
+    mId = 221314121421
+    sId = 0
+    AI_controller = [sId]
+    random_players = [x for x in range(0,4) if x not in AI_controller]
+    if print_data:
+        visual = VS.print_comparions(how_many_runs,how_many_runs)
+    for i in tqdm(range(0,how_many_runs), desc="Game Loop", leave=False):
+        #game = ludopy.Game(ghost_players=[1,3])
+        game = ludopy.Game()
+        there_is_a_winner = False
+        magnPlayer = MagnPlayer(mId, training = False, exploration = 0)
+        SWJPlayer = test_population[0]
+        SWJPlayer = SWJPlayer[0]
+        #print(f"SWJ: {SWJPlayer}")
+        #AI_controller = random.randint(0, 3) #Randomly select a player to be controlled by AI
+        current_round = 0
+        player_i = 0
+        while not there_is_a_winner:
+            current_round += 1
+            (dice, move_pieces, player_pieces, enemy_pieces, player_is_a_winner, there_is_a_winner), player_i = game.get_observation()
+            if len(move_pieces) and player_i not in  AI_controller:
+                piece_to_move = move_pieces[np.random.randint(0, len(move_pieces))]
+            elif len(move_pieces) and player_i == sId:
+                SWJPlayer(dice, move_pieces, player_pieces, enemy_pieces)
+                piece_to_move = SWJPlayer.get_piece_to_move()
+                #cv2.waitKey(0)
+            elif player_i == mId:
+                piece_to_move = magnPlayer.update((dice, move_pieces, player_pieces, enemy_pieces, player_is_a_winner, there_is_a_winner), player_i)
+            else:
+                piece_to_move = -1
+            #enviroment_image_rgb = game.render_environment() # RGB image of the enviroment
+            #enviroment_image_bgr = cv2.cvtColor(enviroment_image_rgb, cv2.COLOR_RGB2BGR)
+            #cv2.imshow("Enviroment", enviroment_image_bgr)
+            #cv2.waitKey(1)
+            a_dice, a_move_pieces, a_player_pieces, a_enemy_pieces, a_player_is_a_winner, there_is_a_winner = game.answer_observation(piece_to_move)
+        #print(f" It took {current_round} rounds to finish game {i}")
+        #print(f"Player {player_i} won the game AI was {AI_controller}")
+        #temp_testing.print_the_values()
+        #temp_testing.print_the_values()
+        if player_i == mId:
+            wins_magn += 1
+        elif player_i == sId:
+            wins_SWJ += 1
+        elif random_players[0] == player_i:
+            no_player_A += 1
+        elif random_players[1] == player_i:
+            no_player_B += 1
+        elif len(random_players) > 2:
+            if random_players[2] == player_i:
+                no_player_C += 1
+        visual(wins_SWJ, no_player_C, no_player_A,no_player_B, i)
+        print(f"Magn has won {wins_magn} vs SWJ {wins_SWJ}")
+        print(f"Computer A has won {no_player_A} vs Computer B {no_player_B}, Computer C {no_player_C}")
+    visual.save_figure("LUDO_genetic/comparison_test",save_to_me)
+    #save_path = save_to_me+"/figures/"+weights_name+"/figure_"+str(count)+".png"
+    #visual.save_figure(save_path, count)
+    #count += 1
+    #cv2.imshow("Enviroment", enviroment_image_bgr)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
+#run_validation_game("LUDO_genetic/output/weights/test_load/",print_data=True)
 
 
 def run_training(save_path, generation = 0,load_weight_path = None, print_data = False,traning_limits = 5, validation_steps = 10, tries = 5):
@@ -165,5 +237,8 @@ def generational_training(load_path, save_path, generation_Start = 0, how_many_g
         
 
 #generational_training("LUDO_genetic/output_simple","LUDO_genetic/output_simple",105,5)
-generational_training("LUDO_genetic/output_fix","LUDO_genetic/output_fix",13,10)
-#run_validation_game("LUDO_genetic/output_simple/weights/generation_110/","LUDO_genetic/output_simple/generation_100",print_data=True,weights_name="weights_110")
+#generational_training("LUDO_genetic/output_fix","LUDO_genetic/output_fix",21,10)
+#run_validation_game("LUDO_genetic/output_fix/weights/generation_28/","LUDO_genetic/output_fix/generation_28",print_data=True,weights_name="weights_28")
+
+
+compare_game("LUDO_genetic/best_weight/","GA_vs_3", True, 1000)
