@@ -7,14 +7,15 @@ import os
 import visual_stats as VS
 
 import random
-import genetic_alghorithm as ga
+#import genetic_alghorithm as ga
+import GAS as ga
 
 from tqdm import tqdm
 import time 
 
-def run_validation_game(path, show_matchs = False, print_data = False, save_data = False, how_many_runs = 100, weights_name = None):
+def run_validation_game(path, save_to_me, show_matchs = False, print_data = False, save_data = False, how_many_runs = 100, weights_name = None):
     test_population = ga.load_weights(path)
-    os.makedirs("LUDO_genetic/output/figures/"+weights_name+"/", exist_ok=True)
+    os.makedirs(save_to_me+"/figures/"+weights_name+"/", exist_ok=True)
     if print_data:
         visual = VS.print_fit_win_all()
     count = 0
@@ -55,7 +56,7 @@ def run_validation_game(path, show_matchs = False, print_data = False, save_data
             #temp_testing.print_the_values()
             temp_testing.reset_fitness()
             #temp_testing.print_the_values()
-        save_path = "LUDO_genetic/output/figures/"+weights_name+"/figure_"+str(count)+".png"
+        save_path = save_to_me+"/figures/"+weights_name+"/figure_"+str(count)+".png"
         visual.save_figure(save_path, count)
         count += 1
     #cv2.imshow("Enviroment", enviroment_image_bgr)
@@ -127,6 +128,8 @@ def run_training(save_path, generation = 0,load_weight_path = None, print_data =
         #print(f"Mean fitness: {mean_fitness} for run {i}")
         test_runner_pop.set_fitnes_value(mean_fitness)
         population_selection(test_runner_pop)
+    print(f"Generation {generation} fitness values where")
+    population_selection.print_fitness_values()
     the_best_performer = population_selection.get_population()
     #print("the_best_performer where:")
     #print(the_best_performer)
@@ -161,7 +164,6 @@ def generational_training(load_path, save_path, generation_Start = 0, how_many_g
         #the_load_path = save_path+"/weights/generation_"+str(i)+"/"
         
 
-generational_training("LUDO_genetic/output","LUDO_genetic/output",39,1)
-
-#run_validation_game("LUDO_genetic/output/weights/generation_10/",print_data=True,weights_name="weights_10")
-
+#generational_training("LUDO_genetic/output_simple","LUDO_genetic/output_simple",105,5)
+generational_training("LUDO_genetic/output_fix","LUDO_genetic/output_fix",13,10)
+#run_validation_game("LUDO_genetic/output_simple/weights/generation_110/","LUDO_genetic/output_simple/generation_100",print_data=True,weights_name="weights_110")

@@ -28,7 +28,14 @@ def is_it_a_kill(pos, enemy_pos):
     if pos in enemy_pos:
         return True
     else:
-        return False    
+        return False
+
+def is_pawn_dang(pos, enemy_pos):
+    #Is the pawn in danger
+    if pos in enemy_pos+6:
+        return True
+    else:
+        return False   
 #No longer used, switched out
 def get_enemies_for_player_pos(enemies):
     temp_enemy_list = []

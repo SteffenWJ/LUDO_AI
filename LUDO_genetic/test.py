@@ -33,3 +33,6 @@ ann_model_4 = ann.ANN_network(weights=test)
 
 
 #np.savetxt('weights.txt', the_weights_to_save)
+
+A
+print(A>B)

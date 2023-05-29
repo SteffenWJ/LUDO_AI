@@ -1,13 +1,11 @@
 import numpy as np
 import ann_model as ann
 import helper_functions as hf
-import names
 
 import glob
 
 import os
 import datetime
-
 rng = np.random.default_rng()
 
 #These are the functions that helps to create the genetic alghorithm
@@ -36,15 +34,19 @@ class selection_of_pop:
         if self.full == False:
             self.populations = np.append(self.populations, np.array([(pop, pop.get_fitness_value_raw())], dtype=[('Population', object), ('fitness_value', float)]))
             if (pop.get_fitness_value_raw() > self.lowest_fitnes):
-                self.lowest_fitnes = pop.get_fitness_value_raw()
+                self.lowest_fitnes = np.min(self.populations['fitness_value'])
             if self.populations.shape[0] == 10:
                 self.full = True
         else:
+            print(f"Checking if {pop.get_fitness_value_raw()} is higher than {self.lowest_fitnes}")
             if pop.get_fitness_value_raw() > self.lowest_fitnes:
+                print(f"Replacing index: {np.argmin(self.populations['fitness_value'])} with {self.populations[np.argmin(self.populations['fitness_value'])]}")
+                print(f"replaced with {pop.get_fitness_value_raw()}") 
                 self.populations    = np.delete(self.populations, np.argmin(self.populations['fitness_value']))
                 self.populations    = np.append(self.populations, np.array([(pop, pop.get_fitness_value_raw())], dtype=[('Population', object), ('fitness_value', float)]))
                 self.lowest_fitnes  = np.min(self.populations['fitness_value'])
-                self.lowest_fitnes  = np.argmin(self.populations['fitness_value'])
+                # Error #self.lowest_fitnes  = np.argmin(self.populations['fitness_value'])
+                print(f"Lowest Fitness is now {self.lowest_fitnes}")
 
 class Population_object:
     def get_generation(self):
@@ -87,7 +89,7 @@ class Population_object:
         return self.star_spot
     def get_fitness_value(self):
         dis_A, dis_B, dis_C, dis_D = self.calculate_distance()
-        self.fitness = self.win*20 + self.kills + dis_A+ dis_B + dis_C + dis_D + self.safe_spot + self.star_spot - self.killed_num
+        self.fitness = self.win*20 + self.kills*1.5 + dis_A+ dis_B + dis_C + dis_D + self.safe_spot + self.star_spot*1.3
         return self.fitness
     def get_fitness_value_raw(self):
         return self.fitness
@@ -116,7 +118,6 @@ class Population_object:
         self.kills      = 0
         self.safe_spot  = 0
         self.star_spot  = 0
-        self.killed_num = 0
         self.win        = False
         self.distance   = np.zeros(4, dtype=int)
         
@@ -149,13 +150,12 @@ class Population_object:
         return _input
     
 
-    def __init__(self, generation_number, parent_A = None, parent_B = None, weights = None):
+    def __init__(self, generation_number, weights = None):
         self.gen_num    = generation_number
         self.fitness    = 0
         self.kills      = 0
         self.safe_spot  = 0
         self.star_spot  = 0
-        self.killed_num = 0
         self.piece_to_move = None
         self.distance   = np.zeros(4, dtype=int)
         self.win        = False
@@ -195,7 +195,7 @@ class Population_object:
 def create_first_generation(ammount = 50): #Was 30, but limitation made it smaller
     populations = np.empty(ammount, dtype=[('Population', object)])
     for i in range(ammount):
-        the_random_population = Population_object(1)
+        the_random_population = Population_object()
         #the_random_population.set_kills(i) # This is for debuging leaving it for some testing
         populations[i] = (the_random_population) # Initialize with dummy fitness value
     return populations
