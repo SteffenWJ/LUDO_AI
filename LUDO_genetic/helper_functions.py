@@ -23,16 +23,56 @@ def is_it_the_goal(pos):
     GOAL_INDEX = 57
     return pos == GOAL_INDEX
 
-def is_it_a_kill(pos, enemy_pos):
+def are_we_on_the_same(pawns):
+    unique_elements, counts = np.unique(pawns, return_counts=True)
+    duplicate_elements = unique_elements[counts > 1]
+    duplicate_indexes = []
+
+    for element in duplicate_elements:
+        indexes = np.where(pawns == element)[0]
+        duplicate_indexes.extend(indexes)
+
+    return duplicate_indexes
+
+def is_it_goal_area(pos,dice):
+    GOAL_INDEX = [52,53,54,55,56]
+    if pos in GOAL_INDEX:
+        return False #Should return false as it is in the goal area
+    elif pos+dice in GOAL_INDEX: #Can it entere the goal
+        return True
+    else:
+        return False
+
+def is_it_a_kill_old(pos, enemy_pos):
     #temp_enemy_pos = enemy_pos_at_pos_SWJ(enemy_pos)
     if pos in enemy_pos:
         return True
     else:
         return False
+    
+def is_there_a_freindly(pos, pawns):
+    if pos in pawns:
+        return True
+    else:  
+        return False
+    
+def is_it_a_kill(pos, enemy_pos):
+    count = 0
+    for enemy_position in enemy_pos:
+        for ep in enemy_position:
+            if pos == ep:
+                count += 1
+
+    if count > 1:
+        return 2
+    elif count == 1:
+        return 1
+    else:
+        return 0
 
 def is_pawn_dang(pos, enemy_pos):
     #Is the pawn in danger
-    if pos in enemy_pos+6:
+    if pos in enemy_pos:
         return True
     else:
         return False   

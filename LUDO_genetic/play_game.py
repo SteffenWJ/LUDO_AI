@@ -24,6 +24,7 @@ while count < 5:
     test_pop = ga.Population_object(count,0)
     while not there_is_a_winner:
         (dice, move_pieces, player_pieces, enemy_pieces, player_is_a_winner, there_is_a_winner), player_i = game.get_observation()
+        print(move_pieces)
         if len(move_pieces) and player_i != AI_controller:
             piece_to_move = move_pieces[np.random.randint(0, len(move_pieces))]
         elif len(move_pieces) and player_i == AI_controller:

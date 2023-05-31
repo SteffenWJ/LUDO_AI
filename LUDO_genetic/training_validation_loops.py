@@ -2,7 +2,7 @@ import ludopy
 import numpy as np
 
 import cv2
-
+from keras.backend import clear_session
 import gc
 import os
 import visual_stats as VS
@@ -18,17 +18,18 @@ def run_validation_game(path, save_to_me, show_matchs = False, print_data = Fals
     test_population = ga.load_weights(path)
     os.makedirs(save_to_me+"/figures/"+weights_name+"/", exist_ok=True)
     if print_data:
-        visual = VS.print_fit_win_all()
+        visual = VS.print_fit_win_all_2()
     count = 0
     for pop in tqdm(test_population, desc="Population Loop", leave=False):
         temp_testing = pop[0]
         if print_data:
             visual.reset_plot()
         for i in tqdm(range(0,how_many_runs), desc="Game Loop", leave=False):
-            game = ludopy.Game(ghost_players=[1,3])
+            #game = ludopy.Game(ghost_players=[1,3])
+            game = ludopy.Game()
             there_is_a_winner = False
-            #AI_controller = random.randint(0, 3) #Randomly select a player to be controlled by AI
-            AI_controller = 0
+            AI_controller = random.randint(0, 3) #Randomly select a player to be controlled by AI
+            #AI_controller = 0
             current_round = 0
             while not there_is_a_winner:
                 current_round += 1
@@ -61,6 +62,7 @@ def run_validation_game(path, save_to_me, show_matchs = False, print_data = Fals
         save_path = save_to_me+"/figures/"+weights_name+"/figure_"+str(count)+".png"
         visual.save_figure(save_path, count)
         count += 1
+    gc.collect()
     #cv2.imshow("Enviroment", enviroment_image_bgr)
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
@@ -74,13 +76,13 @@ def compare_game(path, save_to_me, print_data = False, how_many_runs = 100, figu
     no_player_A = 0
     no_player_B = 0
     no_player_C = 0
-    
-    mId = 221314121421
-    sId = 0
-    AI_controller = [sId]
+    sId = 2
+    mId = 0
+    AI_controller = [mId,sId]
     random_players = [x for x in range(0,4) if x not in AI_controller]
     if print_data:
-        visual = VS.print_comparions(how_many_runs,how_many_runs)
+        #visual = VS.print_comparions_1v3(how_many_runs,how_many_runs)
+        visual = VS.print_comparions_1v1v2(how_many_runs,how_many_runs)
     for i in tqdm(range(0,how_many_runs), desc="Game Loop", leave=False):
         #game = ludopy.Game(ghost_players=[1,3])
         game = ludopy.Game()
@@ -125,7 +127,7 @@ def compare_game(path, save_to_me, print_data = False, how_many_runs = 100, figu
         elif len(random_players) > 2:
             if random_players[2] == player_i:
                 no_player_C += 1
-        visual(wins_SWJ, no_player_C, no_player_A,no_player_B, i)
+        visual(wins_magn, wins_SWJ, no_player_A,no_player_B, i)
         print(f"Magn has won {wins_magn} vs SWJ {wins_SWJ}")
         print(f"Computer A has won {no_player_A} vs Computer B {no_player_B}, Computer C {no_player_C}")
     visual.save_figure("LUDO_genetic/comparison_test",save_to_me)
@@ -150,19 +152,18 @@ def run_training(save_path, generation = 0,load_weight_path = None, print_data =
         population_training = ga.create_population_doubel(population_training,generation)
         create_pop_fix = False
     if print_data:
-        visual = VS.print_fit_win_all()
+        visual = VS.print_fit_win_all_2()
         #print(test[0].get_kills())
     population_selection = ga.selection_of_pop()
     for i in tqdm(range(0, len(population_training)), desc="Population", leave=False):
         test_runner_pop = population_training[i]
         if create_pop_fix:
             test_runner_pop = test_runner_pop[0]
-        #print(test_runner_pop)
         mean_fitness = 0
         fitness_value = []
         if print_data:
             visual.reset_plot()
-        for k in tqdm(range(0,5), desc="Game Loop", leave=False):
+        for _ in tqdm(range(0,10), desc="Game Loop", leave=False):
             game = ludopy.Game()
             there_is_a_winner = False
             AI_controller = random.randint(0, 3) #Randomly select a player to be controlled by AI
@@ -200,7 +201,7 @@ def run_training(save_path, generation = 0,load_weight_path = None, print_data =
         #print(f"Mean fitness: {mean_fitness} for run {i}")
         test_runner_pop.set_fitnes_value(mean_fitness)
         population_selection(test_runner_pop)
-    print(f"Generation {generation} fitness values where")
+    tqdm.write(f"Generation {generation} fitness values where")
     population_selection.print_fitness_values()
     the_best_performer = population_selection.get_population()
     #print("the_best_performer where:")
@@ -209,11 +210,11 @@ def run_training(save_path, generation = 0,load_weight_path = None, print_data =
         #print(the_best_performer)
         the_best_performer[l][0].save_weight(save_path, generation,l)
         
-    del population_selection
-    del the_best_performer
-    del test_runner_pop
-    del population_training
-    gc.collect()
+    #del population_selection
+    #del the_best_performer
+    #del test_runner_pop
+    #del population_training
+    #gc.collect()
     #cv2.imshow("Enviroment", enviroment_image_bgr)
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
@@ -226,7 +227,6 @@ def generational_training(load_path, save_path, generation_Start = 0, how_many_g
     for i in tqdm(range(generation_Start, generation_Start+how_many_generations), desc="Generation",leave=False):
         the_load_path = save_path+"/weights/generation_"+str(i)+"/"
         print("loadpath ",the_load_path)
-        gc.collect()
         if skip_load_path:
             #This is for creating the first generation after it should be using the ohter as the load path should be useable
             run_training(save_path, i)
@@ -237,8 +237,20 @@ def generational_training(load_path, save_path, generation_Start = 0, how_many_g
         
 
 #generational_training("LUDO_genetic/output_simple","LUDO_genetic/output_simple",105,5)
-#generational_training("LUDO_genetic/output_fix","LUDO_genetic/output_fix",21,10)
-#run_validation_game("LUDO_genetic/output_fix/weights/generation_28/","LUDO_genetic/output_fix/generation_28",print_data=True,weights_name="weights_28")
+#generational_training("LUDO_genetic/output_last_try","LUDO_genetic/output_last_try",0,1)
+#run_validation_game("LUDO_genetic/output_last_try/weights/generation_50/","LUDO_genetic/output_last_try/generation_50",print_data=True,weights_name="weights_50_1")
 
+compare_game("LUDO_genetic/best_weight/","1v1v1v1_3", True, 100)
 
-compare_game("LUDO_genetic/best_weight/","GA_vs_3", True, 1000)
+index_ = 42
+steps = 2
+run_me = False
+while run_me:
+    #est_path_A = "LLUDO_genetic/output_last_try/weights/generation_"+str(index_)+"/"
+    #est_path_B = "LUDO_genetic/output_last_try/generation_"+str(index_)
+    #eights_name = "weights_"+str(index_)
+    #un_validation_game(test_path_A,test_path_B,print_data=True,weights_name=weights_name)
+    #lear_session()
+    generational_training("LUDO_genetic/output_last_try","LUDO_genetic/output_last_try",index_,steps)
+    clear_session()
+    index_ += steps

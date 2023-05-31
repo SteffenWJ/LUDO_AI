@@ -167,6 +167,7 @@ class Population_object:
         #print(f"enemy_pieces_converted {enemy_pieces_converted}")
         the_input = self.get_input(dice, move_pieces, player_pieces, enemy_pieces_converted)
         output_net = self.ann_model.use_model(the_input)
+        print(f"Prediction was {output_net}")
         sort_selection = np.argsort(output_net)[0][::-1]
         piece_to_move = None
         

@@ -66,3 +66,9 @@ print(best_pop)
 #    temp_pop = pop[0]
 #    print(temp_pop.get_kills())
 #    print(temp_pop)
+
+
+get_image = ann.ANN_network(36,64,64)
+
+
+get_image.plot_model_all()

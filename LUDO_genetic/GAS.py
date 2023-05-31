@@ -19,7 +19,7 @@ rng = np.random.default_rng()
 class selection_of_pop:
     #This class takes all the populations and spits out the new weights to be used in the next generation
     def get_population(self):
-        self.populations = np.sort(self.populations, order='fitness_value')
+        self.populations = np.sort(self.populations, order='fitness_value')[::-1]
         return self.populations
     
     def print_fitness_values(self):
@@ -36,7 +36,7 @@ class selection_of_pop:
             self.populations = np.append(self.populations, np.array([(pop, pop.get_fitness_value_raw())], dtype=[('Population', object), ('fitness_value', float)]))
             if (pop.get_fitness_value_raw() > self.lowest_fitnes):
                 self.lowest_fitnes = np.min(self.populations['fitness_value'])
-            if self.populations.shape[0] == 10:
+            if self.populations.shape[0] == 6:
                 self.full = True
         else:
             print(f"Checking if {pop.get_fitness_value_raw()} is higher than {self.lowest_fitnes}")
@@ -50,6 +50,10 @@ class selection_of_pop:
                 print(f"Lowest Fitness is now {self.lowest_fitnes}")
 
 class Population_object:
+    def kill_model(self):
+        self.ann_model.clear_the_session()
+    
+    
     def get_generation(self):
         return self.gen_num
     def get_parent_A(self):
@@ -63,11 +67,13 @@ class Population_object:
         D = (self.distance[3]/ max_distance) * value
         return A, B , C , D
     
+    def set_kills(self,num):
+        self.kills = num
     
     def update_win(self):
         self.win = True
-    def update_kill(self, ammount = 1):
-        self.kills += ammount #Should only be 1, but in rare cases it can be more if there are more enemy pawns my home spawn. 
+    def update_kill(self):
+        self.kills += 1
     def update_distance(self, pawn, distance):
         self.distance[pawn] = distance
     def update_safe_spot(self):
@@ -76,21 +82,39 @@ class Population_object:
         self.star_spot += 1
     def set_kills(self,num):
         self.kills = num
-    def how_many_times_dead_dead(self): #Not using it right now but would use to to try and keep it from getting killed
-        return self.kills_num
+    def update_globe_spot(self):
+        self.globe += 1
+    def update_self_kill(self):
+        self.self_kills += 1
+    def update_into_the_goal_area(self):
+        self.get_to_goal += 1
+    def update_get_in_goal(self):
+        self.get_in_goal += 1
+    def update_pawn_in_danger(self):
+        self.pawn_in_danger += 1
     def get_piece_to_move(self):
         return self.piece_to_move
+    def get_get_to_goal(self):
+        return self.get_to_goal
+    def get_get_in_goal(self):
+        return self.get_in_goal
+    def get_pawn_in_danger(self):
+        self.pawn_in_danger
+    def get_globe(self):
+        return self.globe
     def get_kills(self):
         return self.kills
     def get_safe_spots(self):
         return self.safe_spot
+    def get_self_kills(self):
+        return self.self_kills
     def get_distance(self):
         return self.calculate_distance()
     def get_star_spots(self):
         return self.star_spot
     def get_fitness_value(self):
         dis_A, dis_B, dis_C, dis_D = self.calculate_distance()
-        self.fitness = self.win*40 + self.kills*1.3 + dis_A+ dis_B + dis_C + dis_D + self.safe_spot*1.1 + self.star_spot*2 - self.killed_num
+        self.fitness = self.win*20 + dis_A+ dis_B + dis_C + dis_D + self.kills*1.5 + self.safe_spot*1.5 + self.star_spot*1.2 + self.globe*1.5 - self.self_kills + self.get_to_goal + self.get_in_goal - self.pawn_in_danger*0.1
         return self.fitness
     def get_fitness_value_raw(self):
         return self.fitness
@@ -114,73 +138,150 @@ class Population_object:
         
         
     def reset_fitness(self):
-        #This is used as part of validation so the fitness can be reset
-        self.fitness    = 0
-        self.kills      = 0
-        self.safe_spot  = 0
-        self.star_spot  = 0
-        self.killed_num = 0
-        self.win        = False
-        self.distance   = np.zeros(4, dtype=int)
+        #This is used as part of validation so the fitness can be reset      
+        self.kills       = 0
+        self.safe_spot   = 0
+        self.star_spot   = 0
+        self.self_kills  = 0
+        self.globe       = 0
+        self.get_to_goal = 0
+        self.get_in_goal = 0
+        self.pawn_in_danger = 0
+        self.piece_to_move = None
+        self.distance    = np.zeros(4, dtype=int)
+        self.win         = False
+        self.fitness     = 0
         
-    
     def print_the_values(self):
         #This is a debug print to see how the fitness was achived
-        print(f"The AI had the following statistics")
+        print(f"The AI had the following statistics - update me")
         print(f"AI had a fitness of {self.get_fitness_value()}")
-        print(f"The AI kills :   {self.get_kills()}")
-        print(f"The AI stars :   {self.get_star_spots()}")
-        print(f"The AI globes:  {self.get_safe_spots()}")
+        print(f"The AI kills :   {self.kills}")
+        print(f"The AI stars :   {self.star_spot}")
+        print(f"The AI globes:  {self.globe}")
+        print(f"The AI Safe:  {self.safe_spot}")
+        print(f"The AI Self Kill:  {self.self_kills}")
+        print(f"The AI Get to goal:  {self.get_to_goal}")
+        print(f"The AI Get in goal:  {self.get_in_goal}")
+        print(f"The AI pawn in danger:  {self.pawn_in_danger}")
         print(f"The AI Dist  :    {self.get_distance()}")
         print(f"The AI Won  :    {self.win}")
+    
+    def update_the_score(self,pawn,dice,enemy_pieces_converted, freinds):
+        #Calculate the score
+        if hf.is_it_a_glob(pawn+dice):
+                if hf.is_it_a_kill(pawn+dice, enemy_pieces_converted) == 0:
+                    #Update the globe_score
+                    self.update_globe_spot()
+                if hf.is_it_a_kill(pawn+dice, enemy_pieces_converted) > 0:
+                     #Update the killed your self score
+                    self.update_self_kill()
+        else:
+            
+            if hf.is_it_a_kill(pawn+dice, enemy_pieces_converted) == 2:
+                #Update Killed by an enemy
+                    self.update_self_kill()
+            elif hf.is_it_a_kill(pawn+dice, enemy_pieces_converted) == 1:
+                #Update you killed enemy Check start
+                self.update_kill()
+                if hf.is_it_a_star(pawn+dice):
+                    #Update star score
+                    self.update_star_spot()
+            else:
+                if hf.is_there_a_freindly(pawn+dice, freinds):
+                    #Update the safe_score #Pawns on top of each ohters works as globes
+                    self.update_safe_spot()
+                if hf.is_it_a_star(pawn+dice):
+                    #Update star score
+                    self.update_star_spot()
+                if hf.is_it_goal_area(pawn,dice):
+                    #Update get to goal score
+                    self.update_into_the_goal_area()
+                if hf.is_it_the_goal(pawn+dice):
+                    #Update get in goal score
+                    self.update_get_in_goal()                
+        for i in range(1,7): #6 sided diceDice
+            if hf.is_pawn_dang(pawn+dice, enemy_pieces_converted+i):
+            #update score
+                self.update_pawn_in_danger()
+                break #It dose not get more punishment for more
+    
     
     def get_input(self,dice, move_pieces, player_pieces, enemy_pieces):
         #Function needs to return a flatten array of the inputs
         #print(move_pieces)
         _,_,_,enemy_pieces_converted = hf.get_enemy_list_convert(enemy_pieces)
+        enemy_pieces_converted = enemy_pieces
+        #print(enemy_pieces_converted)
         if np.size(move_pieces) == 0:
             _move_pieces = np.array([0, 0, 0, 0])
         elif np.size(move_pieces) > 0:
             _move_pieces = np.array([0, 0, 0, 0])
-            for num in move_pieces:
+            for num in move_pieces: #The move piece from the game is [0,1,2,3] so if there is a number it can run.
                 _move_pieces[num] = 1
         _glob_list = np.array([0, 0, 0, 0])
         _star_list = np.array([0, 0, 0, 0])
         _kill_list = np.array([0, 0, 0, 0])
         _pawn_dang = np.array([0, 0, 0, 0])
+        _pawn_dies = np.array([0, 0, 0, 0])
+        _pawn_safe = np.array([0, 0, 0, 0])
+        _get_to_goal = np.array([0, 0, 0, 0])
+        _get_in_goal = np.array([0, 0, 0, 0])
         for idx, pawn in enumerate(player_pieces):
+            #I hate these giant IF statments, but it works.
             if hf.is_it_a_glob(pawn+dice) and _move_pieces[idx] == 1:
-                _glob_list[idx] = 1
+                if hf.is_it_a_kill(pawn+dice, enemy_pieces_converted) == 0:
+                    _glob_list[idx] = 1
+                else :
+                    _pawn_dies[idx] = 1 #If there is a enemy on the globe it will kill the pawn.
             if hf.is_it_a_star(pawn+dice)  and _move_pieces[idx] == 1:
                 _star_list[idx] = 1
-            if hf.is_it_a_kill(pawn+dice, enemy_pieces_converted) and _move_pieces[idx] == 1:
+            if hf.is_it_a_kill(pawn+dice, enemy_pieces_converted) == 2 and _move_pieces[idx]:
+                _pawn_dies[idx] = 1
+            elif hf.is_it_a_kill(pawn+dice, enemy_pieces_converted) == 1 and _move_pieces[idx]:
                 _kill_list[idx] = 1
             for i in range(1,7): #6 sided diceDice
                 if hf.is_pawn_dang(pawn, enemy_pieces_converted+i) and _move_pieces[idx] == 1:
                     _pawn_dang[idx] = 1
                     break
+            if hf.is_it_a_glob(pawn) and _move_pieces[idx]:
+                _pawn_safe[idx] = 1
+            if hf.is_it_goal_area(pawn,dice) and _move_pieces[idx]:
+                _get_to_goal[idx] = 1
+            if hf.is_it_the_goal(pawn+dice) and _move_pieces[idx]:
+                _get_in_goal[idx] = 1
+        pawns_on_same = hf.are_we_on_the_same(player_pieces)
+        #print(f"Pawns on the same {pawns_on_same}")
         _move_pieces = _move_pieces.flatten()
-        _glob_list = _glob_list.flatten()
-        _star_list = _star_list.flatten()
-        _kill_list = _kill_list.flatten()
-        _pawn_dang = _pawn_dang.flatten()
+        _glob_list   = _glob_list.flatten()
+        _star_list   = _star_list.flatten()
+        _kill_list   = _kill_list.flatten()
+        _pawn_dang   = _pawn_dang.flatten()
+        _pawn_dies   = _pawn_dies.flatten()
+        _pawn_safe   = _pawn_safe.flatten()
+        _get_to_goal = _get_to_goal.flatten()
+        _get_in_goal = _get_in_goal.flatten()
         #_dice = np.array([dice])
-        _input = np.concatenate([_move_pieces, _glob_list,_star_list,_kill_list,_pawn_dang])
-        _input[_input == -1] = 0 #Converts the minus -1 to 0
+        _input = np.concatenate([_move_pieces, _glob_list,_star_list,_kill_list,_pawn_dang,_pawn_dies,_pawn_safe,_get_to_goal,_get_in_goal])
+        #_input[_input == -1] = 0 #Converts the minus -1 to 0
         #print(f"The Input {_input}")
         return _input
 
     def __init__(self, generation_number, parent_A = None, parent_B = None, weights = None):
-        self.gen_num    = generation_number
-        self.kills      = 0
-        self.safe_spot  = 0
-        self.star_spot  = 0
-        self.killed_num = 0
+        self.gen_num     = generation_number
+        self.kills       = 0
+        self.safe_spot   = 0
+        self.star_spot   = 0
+        self.self_kills  = 0
+        self.globe       = 0
+        self.get_to_goal = 0
+        self.get_in_goal = 0
+        self.pawn_in_danger = 0
         self.piece_to_move = None
-        self.distance   = np.zeros(4, dtype=int)
-        self.win        = False
-        self.fitness    = 0
-        self.ann_model  = ann.ANN_network(weights=weights)
+        self.distance    = np.zeros(4, dtype=int)
+        self.win         = False
+        self.fitness     = 0
+        self.ann_model   = ann.ANN_network(weights=weights)
     
     def __call__(self, dice, move_pieces, player_pieces, enemy_pieces):
         #print(f"enemy_pieces {enemy_pieces}")
@@ -188,28 +289,21 @@ class Population_object:
         #print(f"enemy_pieces_converted {enemy_pieces_converted}")
         the_input = self.get_input(dice, move_pieces, player_pieces, enemy_pieces_converted)
         output_net = self.ann_model.use_model(the_input)
-        sort_selection = np.argsort(output_net)[0][::-1]
+        #sort_selection = np.argsort(output_net)[0][::-1]
+        #print(f"Sorted output was {output_net}")
         piece_to_move = None
         
         #This part picks from the output with the highest score to the lowest
-        for piece in sort_selection:
+        for piece in output_net:                  #sort_selection:
             if piece in move_pieces:
                 piece_to_move = piece
                 break
-            
-        old_pos = player_pieces[piece_to_move]
-        new_pos = old_pos + dice
-        if hf.is_it_a_star(new_pos):
-            self.update_star_spot()
-        elif hf.is_it_a_kill(new_pos, enemy_pieces_converted):
-            if hf.is_it_a_glob(new_pos):
-                pass #Might make this a negative value to teach it not to knock it self home.
-            else:
-                self.update_kill()
-        elif hf.is_it_a_glob(new_pos):
-            self.update_safe_spot()
+        #print(f"piece_to_move is {piece_to_move} and it is type {type(piece_to_move)}")
+        postion = player_pieces[piece_to_move]
         
-        self.update_distance(piece_to_move, new_pos)
+        self.update_the_score(postion,dice,enemy_pieces_converted,player_pieces)
+        
+        self.update_distance(piece_to_move, postion+dice)
         #print(f"Done processing moving {piece_to_move} from {old_pos} to {new_pos}")
         self.piece_to_move = piece_to_move
             
@@ -221,7 +315,7 @@ def create_first_generation(ammount = 50): #Was 30, but limitation made it small
         populations[i] = (the_random_population) # Initialize with dummy fitness value
     return populations
 
-def load_weights(path,generation_number = 0, ammount = 10):
+def load_weights(path,generation_number = 0, ammount = 6):
     #This function loads a set of weights from a path and returns a population object
     files_in_path = glob.glob(path+"*.npy")
     #files_in_path = sorted(files_in_path) #This is to make sure the files are loaded in the correct order
@@ -273,8 +367,8 @@ def crossover_weights(weights_A, wieghts_b):
     _temp_child_B = np.reshape(_temp_B, _temp_shape)
     return _temp_child_A, _temp_child_B
 
-def create_population(the_best_pop, generation = 0):
-    #This function creates 50 new populations from a list of the best 10
+def create_population(the_best_pop, generation = 0,first_run = False):
+    #This function creates 50 new populations from a list of the best 6
     _the_new_populations = np.array([], dtype=[('Population', object)])
     _selection  = rng.choice(the_best_pop.shape[0], size=the_best_pop.shape[0], replace=False)
     #I split the selection in half so i can randomly mix them togheter to try and remove any bias this will give is 20 populations
@@ -314,10 +408,10 @@ def create_population(the_best_pop, generation = 0):
     
     #print(np.argsort(the_best_pop['fitness_value']))
     elite_offset = 3
-    #if generation != 0:
-    #    elite_3 = np.argsort(the_best_pop['fitness_value'])[-3:]
-    #    for i in elite_3:
-    #        _the_new_populations = np.append(_the_new_populations, the_best_pop[i])  
+    if not first_run:
+        elite_3 = the_best_pop[:3]
+        for i in elite_3:
+            _the_new_populations = np.append(_the_new_populations, the_best_pop[i][0])  
     #Two new random pops
     #print(len(_the_new_populations))
     if len(_the_new_populations) % 2 == 0:
@@ -331,14 +425,21 @@ def create_population(the_best_pop, generation = 0):
 
 def create_population_doubel(the_best_pop, generation = 0):
     _the_new_populations = np.array([], dtype=[('Population', object)])
-    _selection  = rng.choice(the_best_pop.shape[0], size=the_best_pop.shape[0], replace=False)
     #I split the selection in half so i can randomly mix them togheter to try and remove any bias this will give is 20 populations
-    _left_half   = _selection[:len(_selection)//2]
-    _right_half  = _selection[len(_selection)//2:]
+    _left_half   = []
+    _right_half  = []
     _object_list = the_best_pop['Population']
+    for index, element in enumerate(_object_list):
+        if index % 2 == 0:
+            _left_half.append(element)
+        else:
+            _right_half.append(element)
     for i in range(0,len(_right_half)):
-        AA,AB,AC,AD = _object_list[_left_half][0].get_the_weights()
-        BA,BB,BC,BD = _object_list[_right_half][0].get_the_weights()
+        #AA,AB,AC,AD = _object_list[_left_half][0].get_the_weights()
+        #BA,BB,BC,BD = _object_list[_right_half][0].get_the_weights()
+        AA,AB,AC,AD = _object_list[i].get_the_weights()
+        BA,BB,BC,BD = _object_list[i].get_the_weights()
+        
         AA , BA = crossover_weights(AA,BA)
         AB , BB = crossover_weights(AB,BB)
         AC , BC = crossover_weights(AC,BC)
@@ -353,9 +454,9 @@ def create_population_doubel(the_best_pop, generation = 0):
         temp_pop_B = Population_object(generation, weights = BD)
         _the_new_populations = np.append(_the_new_populations, temp_pop_A)
         _the_new_populations = np.append(_the_new_populations, temp_pop_B)
-    for i in range(0,len(_object_list)):
+    for m in range(0,len(_object_list)):
         #print(_object_list[i])
-        AA,AB,AC,AD = _object_list[i].get_the_weights()
+        AA,AB,AC,AD = _object_list[m].get_the_weights()
         AA = mutate_weights(AA)
         AB = mutate_weights(AB)
         AC = mutate_weights(AC)
@@ -366,7 +467,7 @@ def create_population_doubel(the_best_pop, generation = 0):
         _the_new_populations = np.append(_the_new_populations, temp_pop_A)
     
     
-    #Run the same code a secound tme    
+    #Randomly Mixed
     _selection  = rng.choice(the_best_pop.shape[0], size=the_best_pop.shape[0], replace=False)
     #I split the selection in half so i can randomly mix them togheter to try and remove any bias this will give is 20 populations
     _left_half   = _selection[:len(_selection)//2]
@@ -374,7 +475,7 @@ def create_population_doubel(the_best_pop, generation = 0):
     _object_list = the_best_pop['Population']
     #print(_object_list)
     #print(len(_right_half))
-    for i in range(0,len(_right_half)):
+    for j in range(0,len(_right_half)):
         AA,AB,AC,AD = _object_list[_left_half][0].get_the_weights()
         BA,BB,BC,BD = _object_list[_right_half][0].get_the_weights()
         AA , BA = crossover_weights(AA,BA)
@@ -391,9 +492,44 @@ def create_population_doubel(the_best_pop, generation = 0):
         temp_pop_B = Population_object(generation, weights = BD)
         _the_new_populations = np.append(_the_new_populations, temp_pop_A)
         _the_new_populations = np.append(_the_new_populations, temp_pop_B)
-    for i in range(0,len(_object_list)):
+    for k in range(0,len(_object_list)):
         #print(_object_list[i])
-        AA,AB,AC,AD = _object_list[i].get_the_weights()
+        AA,AB,AC,AD = _object_list[k].get_the_weights()
+        AA = mutate_weights(AA)
+        AB = mutate_weights(AB)
+        AC = mutate_weights(AC)
+        AD[0] = AA
+        AD[1] = AB
+        AD[2] = AC
+        temp_pop_A = Population_object(generation, weights = AD)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_A)
+        _selection  = rng.choice(the_best_pop.shape[0], size=the_best_pop.shape[0], replace=False)
+    #I split the selection in half so i can randomly mix them togheter to try and remove any bias this will give is 20 populations
+    _left_half   = _selection[:len(_selection)//2]
+    _right_half  = _selection[len(_selection)//2:]
+    _object_list = the_best_pop['Population']
+    #print(_object_list)
+    #print(len(_right_half))
+    for _ in range(0,len(_right_half)):
+        AA,AB,AC,AD = _object_list[_left_half][0].get_the_weights()
+        BA,BB,BC,BD = _object_list[_right_half][0].get_the_weights()
+        AA , BA = crossover_weights(AA,BA)
+        AB , BB = crossover_weights(AB,BB)
+        AC , BC = crossover_weights(AC,BC)
+        #Not the pretiests way to do it, but easier for me to see what is going on
+        BD[0] = AA
+        BD[1] = AB
+        BD[2] = AC
+        AD[0] = BA
+        AD[1] = BB
+        AD[2] = BC
+        temp_pop_A = Population_object(generation, weights = AD)
+        temp_pop_B = Population_object(generation, weights = BD)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_A)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_B)
+    for o in range(0,len(_object_list)):
+        #print(_object_list[i])
+        AA,AB,AC,AD = _object_list[o].get_the_weights()
         AA = mutate_weights(AA)
         AB = mutate_weights(AB)
         AC = mutate_weights(AC)
@@ -403,18 +539,26 @@ def create_population_doubel(the_best_pop, generation = 0):
         temp_pop_A = Population_object(generation, weights = AD)
         _the_new_populations = np.append(_the_new_populations, temp_pop_A)
     
-    #print(np.argsort(the_best_pop['fitness_value']))
-    elite_offset = 3
-    #if generation != 0:
-    #    elite_3 = np.argsort(the_best_pop['fitness_value'])[-3:]
-    #    for i in elite_3:
-    #        _the_new_populations = np.append(_the_new_populations, the_best_pop[i])  
-    #Two new random pops
-    #print(len(_the_new_populations))
+    for l in range(0,len(_object_list)):
+        #print(_object_list[i])
+        AA,AB,AC,AD = _object_list[o].get_the_weights()
+        AA = mutate_weights(AA)
+        AB = mutate_weights(AB)
+        AC = mutate_weights(AC)
+        AD[0] = AA
+        AD[1] = AB
+        AD[2] = AC
+        temp_pop_A = Population_object(generation, weights = AD)
+        _the_new_populations = np.append(_the_new_populations, temp_pop_A)
+    
+    elite_3 = the_best_pop[:3]
+    for elite in elite_3:
+        _the_new_populations = np.append(_the_new_populations, elite[0])  
+    
     if len(_the_new_populations) % 2 == 0:
-        for i in range(0,2+elite_offset):
+        for i in range(0,6):
             _the_new_populations = np.append(_the_new_populations, Population_object(generation))
     else:
-        for i in range(0,1+elite_offset):
+        for i in range(0,5):
             _the_new_populations = np.append(_the_new_populations, Population_object(generation))
     return _the_new_populations
